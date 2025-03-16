@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch 
 import numpy as np
 import matplotlib.pyplot as plt
-from extras import *
+from models.extras import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # The following fucntions are modified versions of traning loops, eahc using a different techniques
@@ -209,7 +209,7 @@ def v3(model, folder, optimizer, scheduler, n_epochs, train_loader, val_loader, 
     plt.legend(fontsize=8)
 
     plt.tight_layout()
-    plt.savefig(f"train_losses_separated_{weight}.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(folder+f"train_losses_separated_{weight}.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
     # Log scale plot
@@ -222,7 +222,7 @@ def v3(model, folder, optimizer, scheduler, n_epochs, train_loader, val_loader, 
     plt.xlabel('Epochs')
     plt.ylabel('Loss (Log Scale)')
     plt.legend(fontsize=8)
-    plt.savefig(f"train_losses_log_scale_{weight}.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(folder+f"train_losses_log_scale_{weight}.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
     # Plotting training loss components
@@ -234,7 +234,7 @@ def v3(model, folder, optimizer, scheduler, n_epochs, train_loader, val_loader, 
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend(fontsize=8)
-    plt.savefig(f"train_losses_{weight}.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(folder+f"train_losses_{weight}.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
     # Plotting validation loss components
@@ -245,7 +245,7 @@ def v3(model, folder, optimizer, scheduler, n_epochs, train_loader, val_loader, 
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend(fontsize=8)
-    plt.savefig(f"validation_losses_{weight}.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(folder+f"validation_losses_{weight}.pdf", format="pdf", bbox_inches="tight")
     plt.show()
 
     return train_loss_vals, val_loss_vals, epoch + 1

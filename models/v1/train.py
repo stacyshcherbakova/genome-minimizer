@@ -1,29 +1,34 @@
 # Import all the libraries
+import os
 import pandas as pd 
 import numpy as np 
 import itertools
 import matplotlib.pyplot as plt
 import sklearn
 import sys
-sys.path.append("..")
-from VAE_model import *
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
-from training import *
-from extras import *
-# plt.style.use('ggplot')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from utilities.directories import *
+from models.extras import *
+from models.training import *
+from models.VAE_models.VAE_model import VAE
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-directory = your_directory
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+DATA_PATH = os.path.join(PROJECT_ROOT, TEN_K_DATASET)
+PHYLOGROUP_PATH = os.path.join(PROJECT_ROOT, TEN_K_DATASET_PHYLOGROUPS)
+FIGURE_DIR = os.path.join(PROJECT_ROOT, "models/v1/figures/")
+
 folder = "v1_run/"
 
 print("** START OF THE SCRIPT **\n")
 
 ## Loading and preping the dataset
 print("LOADING THE DATASET...")
-large_data = pd.read_csv(directory+"data_exploration/data/F4_complete_presence_absence.csv", index_col=[0], header=[0])
+large_data = pd.read_csv(DATA_PATH, index_col=[0], header=[0])
 large_data.columns = large_data.columns.str.upper()
-phylogroup_data = pd.read_csv(directory+"data_exploration/data/accessionID_phylogroup_BD.csv", index_col=[0], header=[0])
+phylogroup_data = pd.read_csv(PHYLOGROUP_PATH, index_col=[0], header=[0])
 
 data_without_lineage = large_data.drop(index=['Lineage'])
 merged_df = pd.merge(data_without_lineage.transpose(), phylogroup_data, how='inner', left_index=True, right_on='ID')
@@ -67,7 +72,7 @@ beta_start = 0.1
 beta_end = 1.0
 gamma_start = 1.0
 gamma_end = 0.1
-n_epochs = 10000
+n_epochs = 1 # 10000
 max_norm = 1.0 
 lambda_l1 = 0.01
 input_dim = data_array_t.shape[1]
@@ -82,7 +87,7 @@ print("TRAINING STARTED...")
 train_loss_vals2, val_loss_vals, epochs = v1(model=model, folder=folder, optimizer=optimizer, scheduler=scheduler, n_epochs=n_epochs, train_loader=train_loader, val_loader=val_loader, beta_start=beta_start, beta_end=beta_end, gamma_start=gamma_start, gamma_end=gamma_end, max_norm=max_norm, lambda_l1=lambda_l1)
 
 # Save trained model
-torch.save(model.state_dict(), directory+"models/trained_models/saved_VAE_v1.pt")
+torch.save(model.state_dict(), PROJECT_ROOT+"/models/trained_models/"+folder+"saved_VAE_v1.pt")
 print("Model saved.")
 
 ## Generating a comparison graph 
@@ -90,7 +95,7 @@ print("GENERATING A COMPARISON GRAPH...")
 # Generating points for graphs
 epochs = np.linspace(1, epochs, num=epochs)
 # Plot train vs val loss graph
-name = directory+"models/figures/train_val_loss.pdf"
+name = FIGURE_DIR+"train_val_loss.pdf"
 plot_loss_vs_epochs_graph(epochs=epochs, train_loss_vals=train_loss_vals2, val_loss_vals=val_loss_vals, fig_name=name)
 
 ## Calculating F1 scores 
@@ -135,7 +140,7 @@ plt.figure(figsize=(4,4), dpi=300)
 plt.hist(f1_scores, color='dodgerblue')
 plt.xlabel("F1 score")
 plt.ylabel("Frequency")
-plt.savefig(directory+"models/figures/f1_score_frequency_test_set.pdf", format="pdf", bbox_inches="tight")
+plt.savefig(FIGURE_DIR+"f1_score_frequency_test_set.pdf", format="pdf", bbox_inches="tight")
 plt.show()
 
 # Ploting a histogram of all calculated Accuracy scores scores 
@@ -143,7 +148,7 @@ plt.figure(figsize=(4,4), dpi=300)
 plt.hist(accuracy_scores, color='dodgerblue')
 plt.xlabel("Accuracy score")
 plt.ylabel("Frequency")
-plt.savefig(directory+"models/figures/accuracy_score_frequency_test_set.pdf", format="pdf", bbox_inches="tight")
+plt.savefig(FIGURE_DIR+"accuracy_score_frequency_test_set.pdf", format="pdf", bbox_inches="tight")
 plt.show()
 
 # ## Exploring latent space
@@ -151,7 +156,7 @@ print("EXPLORING THE LATENT SPACE...")
 # Get latent variables
 latents = get_latent_variables(model, test_loader, device)
 # Apply t-SNE for dimensionality reduction
-name = directory+"models/figures/tsne_latent_space_visualisation.pdf"
+name = FIGURE_DIR+"tsne_latent_space_visualisation.pdf"
 # do_tsne(n_components=2, latents=latents, fig_name=name)
 tsne = TSNE(n_components=2)
 tsne_latents = tsne.fit_transform(latents)
@@ -181,7 +186,7 @@ sns.scatterplot(x='PC2', y='PC3', hue = df_pca['phylogroup'] , data=df_pca, ax=a
 for ax in axes:
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, fontsize=8)
-plt.savefig(directory+"models/figures/pca_latent_space_test_set.pdf", format="pdf", bbox_inches="tight")
+plt.savefig(FIGURE_DIR+"pca_latent_space_test_set.pdf", format="pdf", bbox_inches="tight")
 plt.show()
 
 # print("\nHyperparameter tuning")

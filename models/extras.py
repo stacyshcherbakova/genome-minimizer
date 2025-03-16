@@ -6,8 +6,8 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import seaborn as sns
 import re
-from VAE_models.VAE_model import *
-from VAE_models.VAE_model_enhanced import *
+from models.VAE_models.VAE_model import *
+from models.VAE_models.VAE_model_enhanced import *
 
 def plot_essential_vs_total(essential_counts, total_counts, output_path):
     plt.figure(figsize=(4,4))

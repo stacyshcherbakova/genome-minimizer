@@ -9,22 +9,21 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 import sys
-current_dir = os.getcwd()
-parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
-sys.path.insert(0, parent_dir)
-from VAE_models.VAE_model import VAE
-from extras import *
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from models.VAE_models.VAE_model import VAE
+from models.extras import *
+from utilities.directories import *
 
 # Device configuration
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Constants
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-DATA_PATH = os.path.join(PROJECT_ROOT, "data_exploration/data/F4_complete_presence_absence.csv")
-PHYLOGROUP_PATH = os.path.join(PROJECT_ROOT, "data_exploration/data/accessionID_phylogroup_BD.csv")
-MODEL_PATH = os.path.join(PROJECT_ROOT, "models/trained_models/saved_VAE_v2.pt")
+DATA_PATH = os.path.join(PROJECT_ROOT, TEN_K_DATASET)
+PHYLOGROUP_PATH = os.path.join(PROJECT_ROOT, TEN_K_DATASET_PHYLOGROUPS)
+MODEL_PATH = os.path.join(PROJECT_ROOT, "models/trained_models/v2_run/saved_VAE_v2.pt")
 FIGURE_DIR = os.path.join(PROJECT_ROOT, "models/v2/figures/")
-ESSENTIAL_GENE_POSITIONS_PATH = os.path.join(PROJECT_ROOT, "data_exploration/data/essential_gene_positions.pkl")
+ESSENTIAL_GENE_POSITIONS_PATH = os.path.join(PROJECT_ROOT, ESSENTIAL_GENES_POSITIONS)
 
 BATCH_SIZE = 32
 INPUT_DIM = 55039

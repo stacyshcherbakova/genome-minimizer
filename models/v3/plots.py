@@ -10,27 +10,29 @@ import sklearn.metrics
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
-current_dir = os.getcwd()
-parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
-sys.path.insert(0, parent_dir)
-from VAE_models.VAE_model import *
-from VAE_models.VAE_model_enhanced import *
-from training import *
-from extras import *
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from models.VAE_models.VAE_model import VAE
+from models.VAE_models.VAE_model_enhanced import *
+from models.training import *
+from models.extras import *
+from utilities.directories import *
 
 # Device configuration
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+print("start")
 # Constants
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-DATA_PATH = os.path.join(PROJECT_ROOT, "data_exploration/data/F4_complete_presence_absence.csv")
-PHYLOGROUP_PATH = os.path.join(PROJECT_ROOT, "data_exploration/data/accessionID_phylogroup_BD.csv")
+DATA_PATH = os.path.join(PROJECT_ROOT, TEN_K_DATASET)
+PHYLOGROUP_PATH = os.path.join(PROJECT_ROOT, TEN_K_DATASET_PHYLOGROUPS)
+MODEL_PATH = os.path.join(PROJECT_ROOT, "models/trained_models/v3_run/saved_VAE_v3.pt")
 FIGURE_DIR = os.path.join(PROJECT_ROOT, "models/v3/figures/")
-ESSENTIAL_GENE_POSITIONS_PATH = os.path.join(PROJECT_ROOT, "data_exploration/data/essential_gene_positions.pkl")
+ESSENTIAL_GENE_POSITIONS_PATH = os.path.join(PROJECT_ROOT, ESSENTIAL_GENES_POSITIONS)
 
 with open(ESSENTIAL_GENE_POSITIONS_PATH, "rb") as f:
     ESSENTIAL_GENE_POSITIONS = pickle.load(f)
 
+print("load datasets")
 # Load datasets
 large_data = pd.read_csv(DATA_PATH, index_col=0).rename(columns=str.upper)
 data_without_lineage = large_data.drop(index=['Lineage'])
@@ -47,9 +49,11 @@ val_data, test_data, val_labels, test_labels = train_test_split(temp_data, temp_
 test_loader = DataLoader(TensorDataset(test_data), batch_size=32, shuffle=False)
 train_loader = DataLoader(TensorDataset(train_data), batch_size=32, shuffle=False)
 
+print("setting params")
 weights = ['1_gammastart2', '2_gammastart2']
 input_dim, hidden_dim, latent_dim = 55039, 512, 32
 
+print("looping thorugh weigths")
 for weight in weights:
     model, binary_generated_samples = load_model(input_dim, hidden_dim, latent_dim, f"{PROJECT_ROOT}/models/trained_models/v3_run/saved_VAE_v3_{weight}.pt")
     plot_samples_distribution(binary_generated_samples, f"{FIGURE_DIR}/sampling_10000_genome_size_distribution_v3_{weight}.pdf", "dodgerblue", 2000, 5000)
