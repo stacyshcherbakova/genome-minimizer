@@ -1,4 +1,5 @@
 __pycache__
+data_exploration/figures/*
 models/v0/figures/*
 models/v1/figures/*
 models/v2/figures/*

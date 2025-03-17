@@ -4,7 +4,7 @@
 
 ### Requirements
 Libraries:
-PyTorch, numpy, pandas, seaborne, matplotlib, sklearn
+PyTorch, numpy, pandas, seaborne, matplotlib, sklearn, biopython
 
 ### Create a `venv` enviroment using the following commands inside the repository:
 `

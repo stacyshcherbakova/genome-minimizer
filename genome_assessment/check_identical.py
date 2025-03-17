@@ -3,7 +3,8 @@
 from Bio import SeqIO
 from collections import defaultdict
 
-data_dir="/data/"
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+data_dir=PROJECT_ROOT+"/data/"
 
 file_path = data_dir+"generated_genomes.fasta"
 sequences = list(SeqIO.parse(file_path, "fasta"))

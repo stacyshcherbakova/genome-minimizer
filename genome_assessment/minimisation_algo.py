@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from utilities.directories import *
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,6 +13,8 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     filename=log_file_path,
                     filemode='w')
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 class GenomeMinimiser:
     '''
@@ -190,9 +195,9 @@ def main():
     print("********************************************")
     print("* Welcome to genome minimiser application! *")
     print("********************************************")
-    # /data/wild_type_sequence.gb
+    # DATA_DIR+"/wild_type_sequence.gb"
     WILD_TYPE_SEQUENCE = input("Please enter path for the GeneBank sequence file: ")
-    # /data/cleaned_genes_lists_1.npy
+    # DATA_DIR+"/cleaned_genes_lists_1.npy"
     
     PRESENT_GENES = input("Please enter path to the list of lists of sample genes: ")
     WEIGHT = float(input("Please enter the weight of the model: "))
@@ -206,7 +211,7 @@ def main():
     minimised_genomes_sizes = []
     for idx, needed_genes in enumerate(present_genes):
         minimiser = GenomeMinimiser(wildtype_sequence, needed_genes, idx+1)
-        minimized_genome_filename = f"/data/generated_genomes/minimized_genome_{minimiser.idx}.fasta"
+        minimized_genome_filename = PROJECT_ROOT+f"/genome_assessment/generated_genomes/minimized_genome_{minimiser.idx}.fasta"
         # minimiser.save_minimized_genome(minimized_genome_filename)
 
         print(f"Minimal set of genes no. {minimiser.idx}:")
@@ -233,7 +238,7 @@ def main():
         handles = [plt.Line2D([], [], color="b", linestyle="dashed", linewidth=2, label=f"Median: {median:.2f}"),
                 dummy_min, dummy_max] # plt.Line2D([], [], color="r", linestyle="dashed", linewidth=2, label=f"Mean: {mean:.2f}"),
         plt.legend(handles=handles)
-        plt.savefig(f"/figures/minimised_genomes_distribution_{WEIGHT}.pdf", format="pdf", bbox_inches="tight")
+        plt.savefig(PROJECT_ROOT+f"/genome_assessment/figures/minimised_genomes_distribution_{WEIGHT}.pdf", format="pdf", bbox_inches="tight")
         plt.show()
     
     print("Script has successfully finished executing.")

@@ -1,28 +1,24 @@
 import sys
 import os
-
 import pandas as pd 
 import numpy as np 
-
+import sklearn
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import squareform
 from scipy.stats import pearsonr, spearmanr
-
 from collections import defaultdict
-
-import sklearn
 from sklearn.metrics import pairwise_distances
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-
 from Bio import Phylo
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.extras import *
+from utilities.directories import *
 
-# append a local path
-sys.path.append('../utilities')
-sys.path.append('../models')
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+FIGURES_DIR = PROJECT_ROOT+"/data_exploration/figures/"
 
-from directories import *
-from extras import *
+print("start")
 
 large_data = pd.read_csv(TEN_K_DATASET, index_col=[0], header=[0])
 large_data.columns = large_data.columns.str.upper()
@@ -33,7 +29,7 @@ data_without_lineage = large_data.drop(index=['Lineage'])
 large_data_t = np.array(data_without_lineage.transpose())
 print(f"Dataset shape: {large_data_t.shape}")
 
-phylogroup_data = pd.read_csv(PHYLOGROUPS_DATA, index_col=[0], header=[0])
+phylogroup_data = pd.read_csv(TEN_K_DATASET_PHYLOGROUPS, index_col=[0], header=[0])
 merged_df = pd.merge(data_without_lineage.transpose(), phylogroup_data, how='inner', left_index=True, right_on='ID')
 data_array_t = np.array(merged_df.iloc[:, :-1])
 phylogroups_array = np.array(merged_df.iloc[:, -1])
@@ -43,12 +39,17 @@ print(f"Values array: {data_array_t.shape}")
 print(f"Phylogroups array: {phylogroups_array.shape}")
 
 # Figure 1a
-figure_name = "plot_genome_size_final.pdf"
+figure_name = FIGURES_DIR+"plot_genome_size_final.pdf"
 plot_color = "darkorchid"
 frequency2 = data_without_lineage.sum(axis=0).to_numpy()
 frequency2 = frequency2.reshape(-1, 1)
 
-plot_samples_distribution(frequency2, figure_name, plot_color)
+plt.figure(figsize=(4,4))
+plt.hist(frequency2, color='darkorchid', bins=20)
+plt.xlabel('Number of genomes')
+plt.ylabel('Number of genes')
+plt.savefig(FIGURES_DIR+"plot_genome_size_final.pdf", format="pdf", bbox_inches="tight")
+plt.close()
 
 # Figure 1b
 frequency1 = data_without_lineage.sum(axis=1)
@@ -61,7 +62,7 @@ plt.figure(figsize=(4,4))
 plt.hist(frequency1, color='darkorchid', bins=20)
 plt.xlabel('Number of genomes')
 plt.ylabel('Number of genes')
-plt.savefig("plot_gene_count_final.pdf", format="pdf", bbox_inches="tight")
+plt.savefig(FIGURES_DIR+"plot_gene_count_final.pdf", format="pdf", bbox_inches="tight")
 plt.close()
 
 # Figure 1c
@@ -78,7 +79,7 @@ plt.scatter(thresholds, threshold_data, color='darkorchid')
 plt.plot(thresholds, threshold_data, color='darkorchid')
 plt.xlabel("Number of genomes")
 plt.ylabel("Number of genes")
-plt.savefig("plot_gene_frequency_final.pdf", format="pdf", bbox_inches="tight")
+plt.savefig(FIGURES_DIR+"plot_gene_frequency_final.pdf", format="pdf", bbox_inches="tight")
 plt.close()
 
 # Essential genes preprocessing
@@ -138,7 +139,7 @@ columns_to_add = absent_essential_genes_df.columns[row_sums != 0]
 for col in absent_essential_genes_df[columns_to_add].columns:
     intermediate[col] = absent_essential_genes_df[col]
 
-np.save('essential_gene_in_ds.npy', intermediate.columns.to_list())
+np.save(PROJECT_ROOT+'/data/essential_gene_in_ds.npy', intermediate.columns.to_list())
 
 # Figure 1d
 EG_distribution = intermediate.sum(axis=1)
@@ -158,7 +159,7 @@ dummy_max = plt.Line2D([], [], color='black', linewidth=2, label=f'Max: {max_val
 handles = [plt.Line2D([], [], color='b', linestyle='dashed', linewidth=2, label=f'Median: {median:.2f}'),dummy_min, dummy_max]
 
 plt.legend(handles=handles, fontsize=8)
-plt.savefig("plot_EG_number.pdf", format="pdf", bbox_inches="tight")
+plt.savefig(FIGURES_DIR+"plot_EG_number.pdf", format="pdf", bbox_inches="tight")
 plt.close()
 
 # Figure 2a
@@ -169,7 +170,7 @@ plt.figure(figsize=(4,4))
 sns.scatterplot(x='PC1', y='PC2', hue = merged_df.Phylogroup.tolist(), data=df_pca)
 handles, labels = plt.gca().get_legend_handles_labels()  
 plt.legend(handles, labels, fontsize=8) 
-plt.savefig("plot_PCA_by_phylogroup.pdf", format="pdf", bbox_inches="tight")
+plt.savefig(FIGURES_DIR+"plot_PCA_by_phylogroup.pdf", format="pdf", bbox_inches="tight")
 plt.show()
 
 # Figure 2b

@@ -5,28 +5,23 @@ from collections import defaultdict
 import os
 import pickle
 import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.extras import *
+from utilities.directories import *
 
-#current_dir = os.getcwd()
-#parent_dir = os.path.abspath(os.path.join(current_dir, '..'))
-#sys.path.insert(0, parent_dir)
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-sys.path.append('../utilities')
-sys.path.append('../models')
-
-from extras import *
-
-DATA_PATH = "/home/cbarnes/Projects/project-minimal-ecoli/genome_minimizer/data/F4_complete_presence_absence.csv"  
-PHYLOGROUP_PATH = "/home/cbarnes/Projects/project-minimal-ecoli/genome_minimizer/data/accessionID_phylogroup_BD.csv"
+print("start")
 
 # Load and preprocess data
-large_data = pd.read_csv(DATA_PATH,index_col=0, header=0)
+large_data = pd.read_csv(TEN_K_DATASET, index_col=0, header=0)
 large_data.columns = large_data.columns.str.upper()
 data_without_lineage = large_data.drop(index=['Lineage'])
-phylogroup_data = pd.read_csv(PHYLOGROUP_PATH, index_col=[0], header=[0])
+phylogroup_data = pd.read_csv(TEN_K_DATASET_PHYLOGROUPS, index_col=[0], header=[0])
 
 merged_df = pd
 merged_df = pd.merge(data_without_lineage.transpose(), phylogroup_data, how='inner', left_index=True, right_on='ID')
-essential_genes = pd.read_csv("/home/cbarnes/Projects/project-minimal-ecoli/genome_minimizer/data/essential_genes.csv")
+essential_genes = pd.read_csv(PAPER_ESSENTIAL_GENES)
 essential_genes_array = np.array(essential_genes).flatten()
 all_genes = merged_df.columns
 essential_genes_mask = np.isin(all_genes, essential_genes_array)
@@ -99,5 +94,5 @@ for gene in essential_genes_array:
 
 print(type(essential_gene_positions))
 
-with open("essential_gene_positions.pkl", "wb") as f:
+with open(PROJECT_ROOT+"/data/essential_gene_positions.pkl", "wb") as f:
     pickle.dump(essential_gene_positions, f)

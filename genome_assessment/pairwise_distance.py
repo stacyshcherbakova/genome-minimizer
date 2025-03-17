@@ -1,15 +1,18 @@
 ## Counts pairwise distance in you presence absence matrix and creates a newick tree file
 
+import os
+import sys
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import linkage, to_tree
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from utilities.directories import *
 
 SAMPLES = 100
 
-data_dir="/data/"
-# large_data = pd.read_csv(data_dir+"F4_complete_presence_absence.csv", index_col=[0], header=[0])
-# phylogroup_data = pd.read_csv(data_dir+"accessionID_phylogroup_BD.csv", index_col=[0], header=[0])
+# large_data = pd.read_csv(DATA_DIR+"F4_complete_presence_absence.csv", index_col=[0], header=[0])
+# phylogroup_data = pd.read_csv(DATA_DIR+"accessionID_phylogroup_BD.csv", index_col=[0], header=[0])
 # data_without_lineage = large_data.drop(index=['Lineage'])
 # large_data_t = np.array(data_without_lineage.transpose())
 # merged_df = pd.merge(data_without_lineage.transpose(), phylogroup_data, how='inner', left_index=True, right_on='ID')
@@ -19,7 +22,7 @@ data_dir="/data/"
 ADDITIONAL_SAMPLES = input("Please enter name of the additional generated samples: ")
 WEIGHT = input("Please enter the weight: ")
 
-presence_absence_matrix = np.load(data_dir+ADDITIONAL_SAMPLES, allow_pickle=True).tolist()[:SAMPLES]
+presence_absence_matrix = np.load(DATA_DIR+ADDITIONAL_SAMPLES, allow_pickle=True).tolist()[:SAMPLES]
 
 pairwise_dist = pdist(presence_absence_matrix, metric='jaccard')
 
@@ -39,7 +42,7 @@ def to_newick(tree, labels, parent_dist=0):
 tree, nodes = to_tree(linkage_matrix, rd=True)
 newick_str = to_newick(tree, [f'Sample {i+1}' for i in range(SAMPLES)]) + ";"
 
-with open(data_dir+"upgma_tree_"+WEIGHT+".newick", "w") as f:
+with open(DATA_DIR+"upgma_tree_"+WEIGHT+".newick", "w") as f:
     f.write(newick_str)
 
-np.savetxt(data_dir+"pairwise_distances_final_dataset_"+WEIGHT+".csv", distance_matrix, delimiter=',')
+np.savetxt(DATA_DIR+"pairwise_distances_final_dataset_"+WEIGHT+".csv", distance_matrix, delimiter=',')
