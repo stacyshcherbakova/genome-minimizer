@@ -1,12 +1,13 @@
 ## checks if you have any identical sequences in your fasta file 
 
+import os
+import sys
 from Bio import SeqIO
 from collections import defaultdict
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from utilities.directories import *
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-data_dir=PROJECT_ROOT+"/data/"
-
-file_path = data_dir+"generated_genomes.fasta"
+file_path = DATA_DIR+"generated_genomes.fasta"
 sequences = list(SeqIO.parse(file_path, "fasta"))
 
 sequence_dict = defaultdict(list)
