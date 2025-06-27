@@ -22,7 +22,7 @@ from utilities.directories import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-FIGURE_DIR = os.path.join(PROJECT_ROOT, "models/v3/figures/")
+FIGURE_DIR = os.path.join(PROJECT_ROOT, "models/v3/figures_sample/")
 if not os.path.exists(FIGURE_DIR):
     os.makedirs(FIGURE_DIR)
 
@@ -51,51 +51,58 @@ train_loader = DataLoader(TensorDataset(train_data), batch_size=32, shuffle=Fals
 print("setting params")
 weights = ['1_gammastart2', '2_gammastart2']
 input_dim, hidden_dim, latent_dim = 55039, 512, 32
+nsamples = 100
 
-print("looping thorugh weights")
+print("looping through weights")
 for weight in weights:
+    print(f"Processing weight: {weight}")
 
     ### DEFAULT SAMPLING
-    # This loads and samples from the model
-    model, binary_generated_samples = load_model(input_dim, hidden_dim, latent_dim, f"{MODEL_DIR}/saved_VAE_v3_{weight}.pt")
-    plot_samples_distribution(binary_generated_samples, f"{FIGURE_DIR}/sampling_10000_genome_size_distribution_v3_{weight}.pdf", "dodgerblue", 2000, 5000)
+    model = load_model(input_dim, hidden_dim, latent_dim, f"{MODEL_DIR}/saved_VAE_v3_{weight}.pt")
+    binary_generated_samples, generated_samples, z = sample_from_model(model, latent_dim, nsamples, device)
+    
+    print(f"\tGenerated samples: {binary_generated_samples.shape[0]}")
+    genome_sizes = binary_generated_samples.sum(axis=1)
+    print(f"\tMedian genome size: {np.median(genome_sizes)}")
+    print(f"\tMin/Max of genome sizes: {np.min(genome_sizes)} - {np.max(genome_sizes)}")
 
-    model.eval()
+    plot_samples_distribution(binary_generated_samples, f"{FIGURE_DIR}/plot_full_samples_v3_{weight}.pdf", "dodgerblue", 2000, 5000)
+    np.save(f"{FIGURE_DIR}/data_full_samples_v3_{weight}.npy", binary_generated_samples)
 
-    latents = get_latent_variables(model, test_loader, "cpu")
+    latents = get_latent_variables(model, test_loader, device)
     data_pca = PCA(n_components=2).fit_transform(latents)
     df_pca = pd.DataFrame(data_pca, columns=['PC1', 'PC2']).assign(phylogroup=test_labels)
 
     plt.figure(figsize=(4,4))
     sns.scatterplot(x='PC1', y='PC2', hue='phylogroup', data=df_pca)
     plt.legend(fontsize=8)
-    plt.savefig(f"{FIGURE_DIR}/pca_latent_space_visualisation_v3_{weight}.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(f"{FIGURE_DIR}/plot_full_pca_latent_v3_{weight}.pdf", format="pdf", bbox_inches="tight")
 
     essential_genes_count_per_sample = count_essential_genes(binary_generated_samples, essential_gene_positions)
-    plot_essential_genes_distribution(essential_genes_count_per_sample, f"{FIGURE_DIR}/essential_genes_v3_{weight}.pdf", "violet", 250, 327)
+    plot_essential_genes_distribution(essential_genes_count_per_sample, f"{FIGURE_DIR}/plot_full_essential_genes_v3_{weight}.pdf", "violet", 250, 327)
 
     ### FOCUSSED SAMPLING
-    num_samples = 1000
-    with torch.no_grad():
-        z = torch.randn(num_samples, latent_dim)
-        generated_samples = model.decode(z).cpu().numpy()
-    binary_generated_samples = (generated_samples > 0.5).astype(float)
-
     min_ones_index = np.argmin(binary_generated_samples.sum(axis=1))
     latent_distances = np.linalg.norm(generated_samples - generated_samples[min_ones_index], axis=1)
     closest_latent_index = np.argmin(latent_distances)
     
     z_of_interest = z[closest_latent_index].unsqueeze(0)
     with torch.no_grad():
-        noise = torch.randn(num_samples, latent_dim) * 0.1
+        noise = torch.randn(nsamples, latent_dim, device=device) * 0.1
         additional_generated_samples = model.decode(z_of_interest + noise).cpu().numpy()
     additional_generated_samples = (additional_generated_samples > 0.5).astype(float)
 
-    plot_samples_distribution(additional_generated_samples, f"{FIGURE_DIR}/additional_sampling_10000_genome_size_distribution_v3_{weight}.pdf", "dodgerblue", 2000, 2500)
-    np.save(f"{FIGURE_DIR}/additional_generated_samples_v3_{weight}.npy", additional_generated_samples)
+    print()
+    print(f"\tGenerated additional samples: {additional_generated_samples.shape[0]}")
+    genome_sizes = additional_generated_samples.sum(axis=1)
+    print(f"\tMedian genome size: {np.median(genome_sizes)}")
+    print(f"\tMin/Max of genome sizes: {np.min(genome_sizes)} - {np.max(genome_sizes)}")
+
+    plot_samples_distribution(additional_generated_samples, f"{FIGURE_DIR}/plot_focus_samples_v3_{weight}.pdf", "dodgerblue", 2000, 5000)
+    np.save(f"{FIGURE_DIR}/data_focus_samples_v3_{weight}.npy", additional_generated_samples)
 
     essential_genes_count_per_sample = count_essential_genes(additional_generated_samples, essential_gene_positions)
-    plot_essential_genes_distribution(essential_genes_count_per_sample, f"{FIGURE_DIR}/additional_essential_genes_v3_{weight}.pdf", "violet", 250, 327)
+    plot_essential_genes_distribution(essential_genes_count_per_sample, f"{FIGURE_DIR}/plot_focus_essential_genes_v3_{weight}.pdf", "violet", 250, 327)
 
     total_genes_count_per_sample = additional_generated_samples.sum(axis=1)
-    plot_essential_vs_total(essential_genes_count_per_sample, total_genes_count_per_sample, f"{FIGURE_DIR}/additional_essential_vs_total_genes_v3_{weight}.pdf")
+    plot_essential_vs_total(essential_genes_count_per_sample, total_genes_count_per_sample, f"{FIGURE_DIR}/plot_focus_essential_vs_total_v3_{weight}.pdf")
