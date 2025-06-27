@@ -73,11 +73,13 @@ def count_essential_genes(binary_generated_samples, essential_gene_positions):
 
     '''
 
+    nsamples = binary_generated_samples.shape[0]
+
     binary_generated_samples = binary_generated_samples.astype(int)
 
-    essential_genes_count_per_sample = np.zeros(10000, dtype=int)
+    essential_genes_count_per_sample = np.zeros(nsamples, dtype=int)
 
-    for sample_index in range(10000):
+    for sample_index in range(nsamples):
         present_essential_genes = 0
         
         for _, positions in essential_gene_positions.items():
@@ -211,11 +213,11 @@ def load_model_enhanced(input_dim, hidden_dim, latent_dim, path_to_model):
 
     # changes layer norm layer to batch norm layer and 
     model = VAE_enhanced(input_dim, hidden_dim, latent_dim)
-    model.load_state_dict(torch.load(path_to_model, map_location=torch.device('cpu')))  
+    model.load_state_dict(torch.load(path_to_model, map_location=torch.device('cpu'), weights_only=True))  
     model.eval()  
 
     # Generate 10 new samples
-    num_samples = 10000
+    num_samples = 1000
     with torch.no_grad():
         z = torch.randn(num_samples, latent_dim)  # Sample from the standard normal distribution because the latent space follows normal distribution 
         generated_samples = model.decode(z).cpu().numpy() 
@@ -259,7 +261,7 @@ def load_model(input_dim, hidden_dim, latent_dim, path_to_model):
 
     # changes layer norm layer to batch norm layer and 
     model = VAE(input_dim, hidden_dim, latent_dim)
-    model.load_state_dict(torch.load(path_to_model, map_location=torch.device('cpu')))  
+    model.load_state_dict(torch.load(path_to_model, map_location=torch.device('cpu'), weights_only=True))  
     model.eval()  
 
     # Generate 10 new samples

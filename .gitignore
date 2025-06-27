@@ -5,9 +5,6 @@ models/v1/figures/*
 models/v2/figures/*
 models/v3/figures/*
 data/*
-models/trained_models/v0_run/saved_VAE_v0.pt
-models/trained_models/v1_run/saved_VAE_v1.pt
-models/trained_models/v2_run/saved_VAE_v2.pt
-models/trained_models/v3_run/*
+models/trained_models/
 GM_env
 .DS_Store

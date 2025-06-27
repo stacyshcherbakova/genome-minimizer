@@ -8,25 +8,31 @@ import sklearn
 import sys
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from utilities.directories import *
 from models.extras import *
 from models.training import *
 from models.VAE_models.VAE_model import VAE
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-DATA_PATH = os.path.join(PROJECT_ROOT, TEN_K_DATASET)
-PHYLOGROUP_PATH = os.path.join(PROJECT_ROOT, TEN_K_DATASET_PHYLOGROUPS)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
+
 FIGURE_DIR = os.path.join(PROJECT_ROOT, "models/v3/figures/")
+if not os.path.exists(FIGURE_DIR):
+    os.makedirs(FIGURE_DIR)
+
+MODEL_DIR = os.path.join(PROJECT_ROOT, "models/trained_models/v3/")
+if not os.path.exists(MODEL_DIR):
+    os.makedirs(MODEL_DIR)
 
 print("** START OF THE SCRIPT **\n")
 
 ## Loading and preping the dataset
 print("LOADING THE DATASET...")
-large_data = pd.read_csv(DATA_PATH, index_col=[0], header=[0])
+large_data = pd.read_csv(TEN_K_DATASET, index_col=[0], header=[0])
 large_data.columns = large_data.columns.str.upper()
-phylogroup_data = pd.read_csv(PHYLOGROUP_PATH, index_col=[0], header=[0])
+phylogroup_data = pd.read_csv(TEN_K_DATASET_PHYLOGROUPS, index_col=[0], header=[0])
 
 data_without_lineage = large_data.drop(index=['Lineage'])
 merged_df = pd.merge(data_without_lineage.transpose(), phylogroup_data, how='inner', left_index=True, right_on='ID')
@@ -70,7 +76,7 @@ min_beta = 0.1
 max_beta = 1.0
 gamma_start = 2.0 # change gamma 
 gamma_end = 0.1 # change gamma 
-n_epochs = 1 # 10000
+n_epochs = 10000
 max_norm = 1.0 
 lambda_l1 = 0.01
 input_dim = data_array_t.shape[1]
@@ -88,7 +94,7 @@ for weight in weights:
     train_loss_vals2, val_loss_vals, epochs = v3(model=model, folder=FIGURE_DIR, optimizer=optimizer, scheduler=scheduler, n_epochs=n_epochs, train_loader=train_loader, val_loader=val_loader, min_beta=min_beta, max_beta=max_beta, gamma_start=gamma_start, gamma_end=gamma_end, weight=weight, max_norm=max_norm, lambda_l1=lambda_l1)
 
     # Save trained model
-    torch.save(model.state_dict(), PROJECT_ROOT+"/models/trained_models/v3_run/"+f"saved_VAE_v3_{weight}_gammastart2.pt")
+    torch.save(model.state_dict(), MODEL_DIR+f"/saved_VAE_v3_{weight}_gammastart2.pt")
     print("Model saved.")
 
     ## Generating a comparison graph 
@@ -96,7 +102,7 @@ for weight in weights:
     # Generating points for graphs
     epochs = np.linspace(1, epochs, num=epochs)
     # Plot train vs val loss graph
-    name = (FIGURE_DIR+f"train_val_loss_{weight}_gammastart2.pdf")
+    name = (FIGURE_DIR+f"/train_val_loss_{weight}_gammastart2.pdf")
     plot_loss_vs_epochs_graph(epochs=epochs, train_loss_vals=train_loss_vals2, val_loss_vals=val_loss_vals, fig_name=name)
 
     ## Calculating F1 scores 
@@ -141,7 +147,7 @@ for weight in weights:
     plt.hist(f1_scores, color='dodgerblue')
     plt.xlabel("F1 score")
     plt.ylabel("Frequency")
-    plt.savefig(FIGURE_DIR+f"f1_score_frequency_test_{weight}_gammastart2.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(FIGURE_DIR+f"/f1_score_frequency_test_{weight}_gammastart2.pdf", format="pdf", bbox_inches="tight")
     plt.show()
     plt.close()
 
@@ -190,7 +196,7 @@ for weight in weights:
     for ax in axes:
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles, labels, fontsize=8)
-    plt.savefig(FIGURE_DIR+f"pca_latent_space_test_{weight}_gammastart2.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(FIGURE_DIR+f"/pca_latent_space_test_{weight}_gammastart2.pdf", format="pdf", bbox_inches="tight")
     plt.show()
     plt.close()
 

@@ -11,14 +11,15 @@ from sklearn.metrics import pairwise_distances
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from Bio import Phylo
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.extras import *
 from utilities.directories import *
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+# PROJECT_ROOT defined in directories.py
 FIGURES_DIR = PROJECT_ROOT+"/data_exploration/figures/"
-
-print("start")
+if not os.path.exists(FIGURES_DIR):
+    os.makedirs(FIGURES_DIR)
 
 large_data = pd.read_csv(TEN_K_DATASET, index_col=[0], header=[0])
 large_data.columns = large_data.columns.str.upper()
