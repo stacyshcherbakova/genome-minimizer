@@ -31,6 +31,16 @@ MODEL_DIR = os.path.join(PROJECT_ROOT, "models/trained_models/v3/")
 with open(ESSENTIAL_GENES_POSITIONS, "rb") as f:
     essential_gene_positions = pickle.load(f)
 
+def write_samples_to_dataframe(binary_generated_samples, all_genes, output_file):
+        """Convert binary generated samples to a DataFrame with genes as rows and samples as columns."""
+        df = pd.DataFrame(binary_generated_samples, columns=all_genes)
+        df.index = [f"Sample_{i+1}" for i in range(df.shape[0])]
+        df = df.transpose()  # Transpose to get genes x samples
+        df.columns = [f"Sample_{i+1}" for i in range(df.shape[1])]  # Rename columns
+        df = df.reset_index()  # Move gene names from index to a column
+        df = df.rename(columns={'index': 'Gene'})  # Rename that column to 'Gene'
+        df.to_csv(output_file, index=False)
+
 print("load datasets")
 # Load datasets
 large_data = pd.read_csv(TEN_K_DATASET, index_col=0).rename(columns=str.upper)
@@ -40,6 +50,10 @@ large_data_t = data_without_lineage.T.values
 phylogroup_data = pd.read_csv(TEN_K_DATASET_PHYLOGROUPS, index_col=0)
 merged_df = data_without_lineage.T.merge(phylogroup_data, left_index=True, right_on='ID')
 data_array_t, phylogroups_array = merged_df.iloc[:, :-1].values, merged_df.iloc[:, -1].values
+
+merged_df = pd.merge(data_without_lineage.transpose(), phylogroup_data, how='inner', left_index=True, right_on='ID')
+all_genes = merged_df.columns[:-1]
+print("all genes size:", all_genes.shape)
 
 data_tensor = torch.tensor(data_array_t, dtype=torch.float32)
 train_data, temp_data, train_labels, temp_labels = train_test_split(data_tensor, phylogroups_array, test_size=0.3, random_state=12345)
@@ -55,7 +69,7 @@ nsamples = 100
 
 print("looping through weights")
 for weight in weights:
-    print(f"Processing weight: {weight}")
+    print(f"\nProcessing weight: {weight}")
 
     ### DEFAULT SAMPLING
     model = load_model(input_dim, hidden_dim, latent_dim, f"{MODEL_DIR}/saved_VAE_v3_{weight}.pt")
@@ -68,6 +82,8 @@ for weight in weights:
 
     plot_samples_distribution(binary_generated_samples, f"{FIGURE_DIR}/plot_full_samples_v3_{weight}.pdf", "dodgerblue", 2000, 5000)
     np.save(f"{FIGURE_DIR}/data_full_samples_v3_{weight}.npy", binary_generated_samples)
+
+    write_samples_to_dataframe(binary_generated_samples, all_genes, f"{FIGURE_DIR}/data_full_samples_df_{weight}.csv")
 
     latents = get_latent_variables(model, test_loader, device)
     data_pca = PCA(n_components=2).fit_transform(latents)
@@ -100,6 +116,8 @@ for weight in weights:
 
     plot_samples_distribution(additional_generated_samples, f"{FIGURE_DIR}/plot_focus_samples_v3_{weight}.pdf", "dodgerblue", 2000, 5000)
     np.save(f"{FIGURE_DIR}/data_focus_samples_v3_{weight}.npy", additional_generated_samples)
+
+    write_samples_to_dataframe(additional_generated_samples, all_genes, f"{FIGURE_DIR}/data_focus_samples_df_{weight}.csv")
 
     essential_genes_count_per_sample = count_essential_genes(additional_generated_samples, essential_gene_positions)
     plot_essential_genes_distribution(essential_genes_count_per_sample, f"{FIGURE_DIR}/plot_focus_essential_genes_v3_{weight}.pdf", "violet", 250, 327)
